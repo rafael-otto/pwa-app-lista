@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -58,4 +58,13 @@ async function handleLogin() {
     loading.value = false;
   }
 }
+
+onMounted(() => {
+  const mensagem = sessionStorage.getItem('auth_message');
+
+  if (mensagem) {
+    errorMessage.value = mensagem;
+    sessionStorage.removeItem('auth_message');
+  }
+});
 </script>

@@ -45,6 +45,7 @@ apiClient.interceptors.response.use(
       }
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
+      sessionStorage.setItem('auth_message', 'Sua sessão expirou. Entre novamente.')
       window.location.href = '/login'
     }
     return Promise.reject(error)
