@@ -7,6 +7,17 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref(localStorage.getItem('refresh_token'))
 
   const isAuthenticated = computed(() => !!accessToken.value)
+  const userEmail = computed(() => {
+    if (!accessToken.value) {
+      return null
+    }
+
+    try {
+      const payload = JSON.parse(atob(accessToken.value.split('.')[1]))
+      return payload.sub
+    } catch (error) {
+      return null
+    }})
 
   async function login(email, password) {
     const { data } = await authApi.login(email, password)
@@ -23,5 +34,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refresh_token')
   }
 
-  return { accessToken, refreshToken, isAuthenticated, login, logout }
+  return { accessToken, refreshToken, isAuthenticated, login, logout, userEmail }
 })

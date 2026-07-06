@@ -5,15 +5,12 @@
     <h1>Meus gestor de Tarefas!!!!</h1>
 
     <nav>
-
       <router-link to="/">Início</router-link>
-
       <router-link to="/about">Sobre</router-link>
-      <button v-if="authStore.isAuthenticated" class="logout-btn" @click="handleLogout">
-        Sair
 
-      </button>
+      <button v-if="authStore.isAuthenticated" class="logout-btn" @click="handleLogout">Sair</button>
 
+      <span v-if="authStore.userEmail" class="user-email">{{ authStore.userEmail }}</span>
     </nav>
 
   </header>
