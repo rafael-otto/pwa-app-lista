@@ -3,6 +3,8 @@
     <form class="login-form" @submit.prevent="handleLogin">
       <h1>Entrar</h1>
 
+      <div v-if="route.query.registered === 'true'" class="success-message">Conta criada. Faça login.</div>
+
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
       <div class="field">
@@ -19,17 +21,23 @@
       <button type="submit" :disabled="loading">
         {{ loading ? 'Entrando...' : 'Entrar' }}
       </button>
+
+      <p class="register-link">
+        <span>Sem uma conta?</span>
+        <RouterLink to="/register">Criar conta</RouterLink>
+      </p>
     </form>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const route = useRoute();
 
 const email = ref('');
 const password = ref('');
