@@ -46,8 +46,8 @@ onMounted(() => {
   store.fetchTasks();
 });
 
-function handleAdd(title) {
-  store.addTask(title);
+function handleAdd(payload) {
+  store.addTask(payload);
 }
 
 function handleUpdate(id, title, imgAttachmentKey) {
@@ -70,6 +70,18 @@ function handleToggle(id) {
 function handleRemove(id) {
   if (editingTask.value?.id === id) editingTask.value = null;
   store.removeTask(id);
+}
+
+async function addTask(payload) {
+  if (!payload.title?.trim()) return;
+  error.value = null;
+  try {
+    const response = await tasksApi.create(payload)
+    tasks.value.push(response.data)
+  } catch (err) {
+    error.value = 'Erro ao adicionar tarefa.'
+    console.error(err)
+  }
 }
 </script>
 

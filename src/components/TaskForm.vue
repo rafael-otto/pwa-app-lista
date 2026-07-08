@@ -5,9 +5,26 @@
       <button type="submit" class="task-button" :disabled="uploading">
         {{ editingTask ? 'Alterar' : 'Adicionar' }}
       </button>
-      <button v-if="editingTask" type="button" class="task-button-cancel" @click="handleCancel">
-        Cancelar
-      </button>
+      <div class="image-section">
+        <!-- Preview da imagem já salva ou capturada -->
+        <img v-if="previewUrl || editingTask?.img_url" :src="previewUrl || editingTask?.img_url" class="image-preview"
+          alt="Imagem da tarefa" />
+
+        <!-- Input com capture (padrão) -->
+        <label class="image-label" :class="{ disabled: uploading }">
+          <span v-if="uploading" class="upload-status">Enviando...</span>
+          <span v-else>Adicionar imagem</span>
+          <input type="file" accept="image/jpeg,image/png" capture="environment" class="image-input"
+            :disabled="uploading" @change="handleImageChange" />
+        </label>
+
+        <!-- Alternativa com preview ao vivo -->
+        <button type="button" class="task-button-secondary" @click="showCameraCapture = !showCameraCapture">
+          {{ showCameraCapture ? 'Fechar câmera' : 'Abrir preview ao vivo' }}
+        </button>
+
+        <CameraCapture v-if="showCameraCapture" @captured="handleCameraCapture" />
+      </div>
     </div>
 
     <div v-if="editingTask" class="image-section">
@@ -21,7 +38,7 @@
             : 'Adicionar imagem'
           }}
         </span>
-        <input type="file" accept="image/jpeg,image/png" class="image-input" :disabled="uploading"
+        <input type="file" accept="image/jpeg,image/png" capture="environment" class="image-input" :disabled="uploading"
           @change="handleImageChange" />
       </label>
     </div>
@@ -49,51 +66,74 @@ watch(
   () => props.editingTask,
   (task) => {
     newTask.value = task ? task.title : ''
+    if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
     previewUrl.value = null
     imgAttachmentKey.value = null
   },
 )
 
 async function handleImageChange(event) {
-  const file = event.target.files[0]
-  if (!file) return
-  previewUrl.value = URL.createObjectURL(file)
-  uploading.value = true
+  const file = event.target.files[0];
+  if (!file) return;
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  previewUrl.value = URL.createObjectURL(file);
+  uploading.value = true;
   try {
-    const response = await tasksApi.uploadImage(file)
-    imgAttachmentKey.value = response.data.attachment_key
+    const response = await tasksApi.uploadImage(file);
+    imgAttachmentKey.value = response.data.attachment_key;
   } catch (err) {
-    console.error('Erro ao fazer upload da imagem', err)
-    previewUrl.value = null
-    imgAttachmentKey.value = null
+    console.error('Erro ao fazer upload da imagem', err);
+    previewUrl.value = null;
+    imgAttachmentKey.value = null;
   } finally {
-    uploading.value = false
+    uploading.value = false;
   }
 }
 
 function handleSubmit() {
-  if (!newTask.value.trim()) return
+  if (!newTask.value.trim()) return;
+
+  const payload = {
+    title: newTask.value.trim(),
+    imgAttachmentKey: imgAttachmentKey.value,
+  };
+
   if (props.editingTask) {
-    emit(
-      'update',
-      props.editingTask.id,
-      newTask.value.trim(),
-      imgAttachmentKey.value
-    )
+    emit('update', props.editingTask.id, payload);
   } else {
-    emit('add', newTask.value.trim())
+    emit('add', payload);
   }
-  newTask.value = ''
-  previewUrl.value = null
-  imgAttachmentKey.value = null
+
+  newTask.value = '';
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  previewUrl.value = null;
+  imgAttachmentKey.value = null;
 }
 
 function handleCancel() {
   newTask.value = ''
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
   previewUrl.value = null
   imgAttachmentKey.value = null
   emit('cancel')
 }
+
+function handleCameraCapture(file) {
+  previewUrl.value = URL.createObjectURL(file);
+  uploading.value = true;
+  tasksApi
+    .uploadImage(file)
+    .then((response) => {
+      imgAttachmentKey.value = response.data.attachment_key;
+    })
+    .catch((err) => {
+      console.error(err);
+      previewUrl.value = null;
+    })
+    .finally(() => {
+      uploading.value = false;
+    });
+} 
 </script>
 
 <style scoped>
